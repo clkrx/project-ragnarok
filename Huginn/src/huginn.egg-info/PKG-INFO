@@ -1,0 +1,10 @@
+Metadata-Version: 2.4
+Name: huginn
+Version: 0.1.0
+Summary: First agent in Project Ragnarok
+Requires-Python: >=3.12
+Requires-Dist: anthropic>=0.102.0
+Requires-Dist: fastapi>=0.136.1
+Requires-Dist: python-dotenv>=1.2.2
+Requires-Dist: rich>=15.0.0
+Requires-Dist: uvicorn>=0.47.0

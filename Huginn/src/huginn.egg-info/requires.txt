@@ -1,0 +1,5 @@
+anthropic>=0.102.0
+fastapi>=0.136.1
+python-dotenv>=1.2.2
+rich>=15.0.0
+uvicorn>=0.47.0
