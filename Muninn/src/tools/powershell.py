@@ -1,5 +1,9 @@
+import logging
 import re
 import subprocess
+
+
+log = logging.getLogger(__name__)
 
 
 # This is the tool definition Claude sees.
@@ -140,18 +144,25 @@ def run_powershell(command: str, timeout: int = 30) -> dict:
             errors="replace",
             timeout=timeout,
         )
+        log.info(
+            "powershell exit_code=%s cmd=%r",
+            result.returncode,
+            command[:500],
+        )
         return {
             "stdout": result.stdout,
             "stderr": result.stderr,
             "exit_code": result.returncode,
         }
     except subprocess.TimeoutExpired:
+        log.warning("powershell timeout cmd=%r", command[:500])
         return {
             "stdout": "",
             "stderr": f"Command timed out after {timeout} seconds",
             "exit_code": -1,
         }
     except Exception as e:
+        log.error("powershell error cmd=%r err=%s", command[:500], e)
         return {
             "stdout": "",
             "stderr": f"Error running command: {e}",

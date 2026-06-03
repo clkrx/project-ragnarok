@@ -1,39 +1,44 @@
-import os
+import asyncio
+import sys
+from pathlib import Path
+
 from dotenv import load_dotenv
-from anthropic import Anthropic
 from rich.console import Console
 from rich.prompt import Prompt
 
+sys.path.insert(0, str(Path(__file__).parent))
+
+from agent import build_default_agent
+
 load_dotenv()
-client = Anthropic()
 console = Console()
+DATA_DIR = Path(__file__).parent / "data"
+agent = build_default_agent(DATA_DIR)
+conversation_id = agent.store.create()
 
-SYSTEM_PROMPT = """You are Huginn, the first agent of Project Ragnarok.
-You are named after one of Odin's two ravens, whose name means "thought."
-In Norse mythology, Huginn flies across the world and reports back what he sees.
-You are direct, capable, and focused. Keep responses concise."""
 
-messages = []
-
-console.print("[bold cyan]Huginn online. Type 'exit' to quit.[/bold cyan]\n")
-
-while True:
-    user_input = Prompt.ask("[bold green]You[/bold green]")
-    
-    if user_input.lower() in ["exit", "quit"]:
-        console.print("[dim]Huginn signing off.[/dim]")
-        break
-    
-    messages.append({"role": "user", "content": user_input})
-    
-    response = client.messages.create(
-        model="claude-sonnet-4-5",
-        max_tokens=1024,
-        system=SYSTEM_PROMPT,
-        messages=messages,
+async def main() -> None:
+    console.print(
+        f"[bold cyan]Muninn online ({agent.model}). Type 'exit' to quit.[/bold cyan]\n"
     )
-    
-    assistant_text = response.content[0].text
-    messages.append({"role": "assistant", "content": assistant_text})
-    
-    console.print(f"[bold magenta]Huginn[/bold magenta]: {assistant_text}\n")
+    while True:
+        user_input = Prompt.ask("[bold green]You[/bold green]")
+        if user_input.lower() in ["exit", "quit"]:
+            console.print("[dim]Muninn signing off.[/dim]")
+            break
+        async for event in agent.handle_message(user_input, conversation_id):
+            if event["type"] == "text":
+                console.print(event["content"], end="", highlight=False)
+            elif event["type"] == "tool_use":
+                console.print(
+                    f"\n[dim][tool: {event['name']}][/dim]", end="", highlight=False
+                )
+            elif event["type"] == "error":
+                console.print(f"\n[red]{event['message']}[/red]", highlight=False)
+            elif event["type"] == "done":
+                console.print()
+        console.print()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
