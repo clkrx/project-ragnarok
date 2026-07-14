@@ -12,3 +12,8 @@ dependencies = [
     "rich>=15.0.0",
     "uvicorn>=0.47.0",
 ]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]
